@@ -1,0 +1,62 @@
+.slides section.repl {
+    background: none;
+    margin: 0;
+    padding: 0 0.2em 0.2em 0;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    text-align: left;
+
+    div.repl-window, div.terminal {
+        font-family: "Inconsolata";
+        line-height: 1.2em;
+        font-size: 16pt;
+        letter-spacing: 0;
+    }
+
+    div.terminal {
+        border: 0;
+    }
+
+    div.repl-window.type-repl, div.repl-window.type-frame {
+        padding: 0.2em;
+        display: flex;
+        align-items: center;
+        // WARNING: content-box because otherwise `getComputedStyle`
+        // will include padding and border.
+        box-sizing: content-box;
+    }
+
+    div.repl-window.type-frame iframe {
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        margin: 0;
+    }
+
+    div.slideContainer {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+
+        div.row {
+            display: flex;
+            flex: 1;
+            flex-direction: row;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+        }
+
+        div.repl-window {
+            background: white;
+            border-radius: 0.05em;
+            flex: 1;
+            margin-left: 0.2em;
+            margin-top: 0.2em;
+        }
+    }
+}

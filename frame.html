@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>iframe</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width">
+    <style type="text/css">
+      body {
+        background: white;
+        color: black;
+        margin: 0;
+        padding: 1em;
+        font-family: "Comic Sans MS", sans-serif;
+        font-size: 1em;
+      }
+      pre.error {
+        font-family: "Comic Sans MS", sans-serif;
+        color: #800;
+        font-size: 1em;
+      }
+      .loading {
+        text-align: center;
+        position: absolute;
+        top: 50%;
+        width: 100%;
+        margin: 0 -1em;
+        padding: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="target"></div>
+  </body>
+  <script type="text/javascript">
+    const url = "https://lol.camp/psc/compile";
+    let stdlib = null;
+    const state = {};
+
+    function compile(code) {
+      console.log("Compiling on", url);
+      return new Promise(function(resolve, reject) {
+        fetch(url, {
+          method: "POST",
+          body: code,
+          mode: "cors"
+        }).then(function(response) {
+          if (response.status !== 200) {
+            throw new Error(`Compiler service error: ${response.status} ${response.statusText}`);
+          }
+          response.json().then(function(msg) {
+            const js = msg.js, error = msg.error;
+            if (typeof js === "string") {
+              const replaced = js.replace(/require\("[^"]*"\)/g, (s) => "PS['" + s.substring(12, s.length - 2) + "']");
+              const wrapped = `(function(){
+return function(module, PS) {
+  ${replaced}
+};
+})();`;
+              resolve({js: wrapped});
+            } else if (typeof error === "string") {
+              resolve({error});
+            } else {
+              reject(new Error(`Compile service returned unexpected response: ${input}`));
+            }
+          });
+        });
+      });
+    }
+
+    window.addEventListener("message", function(event) {
+      const msg = event.data;
+      switch (msg.command) {
+        case "prelude":
+          const prelude = eval(msg.data);
+          stdlib = prelude();
+          console.log("IFRAME: prelude loaded");
+          break;
+        case "load":
+          document.getElementById("target").innerHTML = "<h3 class='loading'>compiling brb</h3>";
+          compile(msg.data).then(function(result) {
+            if (result.js) {
+              document.getElementById("target").innerHTML = "";
+              const thunk = eval(result.js);
+              thunk(state, stdlib);
+              if (typeof state.exports.main === "function") {
+                state.exports.main();
+              } else {
+                document.getElementById("target").innerHTML = "<pre class='error'>You forgot your main function!</pre class='error'><pre>lololol noob</pre>";
+              }
+            } else if (result.error) {
+              document.getElementById("target").innerHTML = "<pre class='error'>" + result.error + "</pre>";
+            }
+          });
+          break;
+        default:
+          console.error("IFRAME: received unknown message", msg);
+          break;
+      }
+    }, false);
+  </script>
+</html>
